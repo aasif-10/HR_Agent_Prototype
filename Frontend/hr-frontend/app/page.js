@@ -169,12 +169,25 @@ const page = () => {
     return "Got it — I can help with that. Can you give a bit more detail?";
   };
 
-  const simulateBotReply = (incomingText) => {
+  const simulateBotReply = async (incomingText) => {
     setIsTyping(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: incomingText }),
+      });
+
+      const data = await res.json(); // safer than parsing text manually
       setIsTyping(false);
-      addBotMessage(generateBotReply(incomingText));
-    }, 1000 + Math.random() * 1000);
+
+      if (data.error) addBotMessage(`Error: ${data.error}`);
+      else addBotMessage(data.reply);
+    } catch (err) {
+      setIsTyping(false);
+      addBotMessage("Oops! Something went wrong.");
+      console.error("Fetch error:", err);
+    }
   };
 
   const handleSend = () => {
