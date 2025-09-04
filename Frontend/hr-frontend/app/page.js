@@ -9,6 +9,8 @@ import {
   MdOutlinePolicy,
 } from "react-icons/md";
 import { LuSend } from "react-icons/lu";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const page = () => {
   // --- state ---
@@ -51,6 +53,7 @@ const page = () => {
     return "Got it — I can help with that. Can you give a bit more detail?";
   };
 
+  // In your React component, update this function:
   const simulateBotReply = async (incomingText) => {
     setIsTyping(true);
     try {
@@ -60,16 +63,41 @@ const page = () => {
         body: JSON.stringify({ message: incomingText }),
       });
 
-      const data = await res.json(); // safer than parsing text manually
+      const data = await res.json();
       setIsTyping(false);
 
-      if (data.error) addBotMessage(`Error: ${data.error}`);
-      else addBotMessage(data.reply);
+      if (data.error) {
+        addBotMessage(`Error: ${data.error}`);
+      } else {
+        // Add the bot message
+        addBotMessage(data.reply);
+
+        // If there are action buttons, show them
+        if (data.actions && data.actions.length > 0) {
+          setTimeout(() => {
+            addActionButtons(data.actions);
+          }, 500);
+        }
+
+        // Log structured data for debugging
+        if (data.data) {
+          console.log("HR Data received:", data.data);
+        }
+      }
     } catch (err) {
       setIsTyping(false);
       addBotMessage("Oops! Something went wrong.");
       console.error("Fetch error:", err);
     }
+  };
+
+  // New function to add action buttons
+  const addActionButtons = (actions) => {
+    const buttonMessage = `Quick actions: ${actions
+      .map((action) => `[${action}]`)
+      .join(" ")}`;
+
+    addBotMessage(buttonMessage);
   };
 
   const handleSend = () => {
@@ -104,7 +132,7 @@ const page = () => {
         <div className="page-right w-[85vw] flex flex-col gap-1">
           {/* header */}
           <div className="page1-top h-[10vh] bg-[#131313] rounded-t-xl flex justify-between items-center px-[40px] py-[5px]">
-            <h2 className="cursor-pointer text-[#ccc3c3] font-['PP_Editorial_New'] font-[500] text-[20px]">
+            <h2 className="cursor-pointer text-[#ccc3c3] font-['PP_Editorial_New_Thin_'] font-[600] text-[20px]">
               HR Buddy
             </h2>
             <div className="chat-options flex gap-5 items-center">
@@ -200,10 +228,17 @@ const page = () => {
                             : "bg-[#2b2b2b] text-[#e6e1e1] rounded-bl-2xl rounded-tr-2xl"
                         }`}
                       >
-                        {m.text}
+                        {m.sender === "bot" ? (
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {m.text}
+                          </ReactMarkdown>
+                        ) : (
+                          m.text
+                        )}
                       </div>
                     </div>
                   ))}
+
                   {isTyping && (
                     <div className="flex justify-start">
                       <div className="bg-[#2b2b2b] text-[#e6e1e1] p-3 rounded-2xl flex items-center gap-1">
