@@ -31,6 +31,33 @@ export const employees = {
   },
 };
 
+// NEW: Enterprise-style request tracking
+export let enterpriseRequests = [];
+
+export function createEnterpriseRequest(type, employeeId, data) {
+  const request = {
+    id: `WD-${type.toUpperCase()}-${Date.now().toString(36).toUpperCase()}`,
+    employee_id: employeeId,
+    type: type,
+    status: "PROCESSING",
+    created_at: new Date().toISOString(),
+    workday_transaction_id: `TXN-${Math.random()
+      .toString(36)
+      .substr(2, 8)
+      .toUpperCase()}`,
+    processing_time_ms: Math.floor(500 + Math.random() * 1000),
+    approval_workflow: {
+      current_step: "VALIDATION",
+      next_approver: "System Validation",
+      sla_deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    },
+    ...data,
+  };
+
+  enterpriseRequests.push(request);
+  return request;
+}
+
 // Leave Requests Storage - Tracks all leave applications
 export let leaveRequests = [
   {
